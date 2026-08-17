@@ -36,6 +36,20 @@ export async function ensureSaasSchema() {
       );
     `);
 
+    // 2b. Ensure M-Pesa columns exist on a pre-existing subscriptions table
+    //     (legacy Stripe-shaped tables lack these, which made activation fail)
+    await query(`
+      ALTER TABLE public.subscriptions
+      ADD COLUMN IF NOT EXISTS email text,
+      ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'inactive',
+      ADD COLUMN IF NOT EXISTS current_period_start timestamptz,
+      ADD COLUMN IF NOT EXISTS current_period_end timestamptz,
+      ADD COLUMN IF NOT EXISTS last_mpesa_receipt text,
+      ADD COLUMN IF NOT EXISTS last_amount_paid numeric(12,2),
+      ADD COLUMN IF NOT EXISTS created_at timestamptz NOT NULL DEFAULT now(),
+      ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAULT now();
+    `);
+
     // 3. Ensure public.subscription_payments table
     await query(`
       CREATE TABLE IF NOT EXISTS public.subscription_payments (
