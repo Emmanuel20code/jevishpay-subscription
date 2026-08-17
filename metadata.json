@@ -1,0 +1,6 @@
+{
+  "name": "Smart Document & Code Studio",
+  "description": "A powerful workspace for managing markdown documents, code snippets, and AI-assisted workflows with robust quota handling.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
