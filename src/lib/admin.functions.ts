@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireSupabaseAuth } from "@/lib/auth-middleware";
 import { query, queryOne } from "./db";
 import { activateSubscriptionForUser } from "./payments.server";
 import { ensureSaasSchema } from "./saas-schema";
