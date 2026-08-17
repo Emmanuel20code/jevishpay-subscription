@@ -74,12 +74,18 @@ export const Route = createFileRoute("/api/public/stk/callback")({
           );
 
           if (succeeded) {
-            const { activateSubscriptionForUser } = await import("@/lib/payments.server");
-            await activateSubscriptionForUser(
-              subPayment.user_id,
-              subPayment.amount,
-              receipt ? String(receipt) : null,
-            );
+            try {
+              const { activateSubscriptionForUser } = await import("@/lib/payments.server");
+              await activateSubscriptionForUser(
+                subPayment.user_id,
+                Number(subPayment.amount),
+                receipt ? String(receipt) : null,
+              );
+            } catch (err) {
+              // Never fail the callback: the payment is recorded as success and
+              // getMySubscription reconciles the activation on next load.
+              console.error("Failed to activate subscription from callback:", err);
+            }
           }
         } else {
           await query(

@@ -8,6 +8,7 @@ import {
   checkAndSyncSubscriptionPayment,
   checkActiveSubscription,
   loadMasterCredentials,
+  reconcileSubscriptionFromPayments,
   paySaasSubscriptionStkPush,
 } from "./payments.server";
 
@@ -15,6 +16,9 @@ import {
 export const getMySubscription = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    // Recover from any successful payment whose activation never landed
+    await reconcileSubscriptionFromPayments(context.userId);
+
     // Run active check to auto-suspend if current_period_end has passed
     const isActive = await checkActiveSubscription(context.userId);
 

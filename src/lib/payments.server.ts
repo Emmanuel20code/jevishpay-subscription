@@ -136,6 +136,40 @@ export async function activateSubscriptionForUser(
   );
 }
 
+/**
+ * Self-healing: if a subscription payment succeeded but the subscription row was
+ * never activated (e.g. the callback failed), activate it from the payment record.
+ */
+export async function reconcileSubscriptionFromPayments(userId: string) {
+  await ensureSaasSchema();
+
+  const pending = await queryOne<{
+    id: string;
+    amount: number | string;
+    mpesa_receipt: string | null;
+    created_at: string;
+  }>(
+    `SELECT p.id, p.amount, p.mpesa_receipt, p.created_at
+       FROM public.subscription_payments p
+       LEFT JOIN public.subscriptions s ON s.user_id = p.user_id
+      WHERE p.user_id = $1
+        AND p.status = 'success'
+        AND p.created_at > now() - interval '1 month'
+        AND (s.current_period_end IS NULL OR s.current_period_end < p.created_at)
+      ORDER BY p.created_at DESC
+      LIMIT 1`,
+    [userId],
+  );
+
+  if (!pending) return false;
+
+  console.log(
+    `[reconcileSubscriptionFromPayments] Activating user ${userId} from successful payment ${pending.id}`,
+  );
+  await activateSubscriptionForUser(userId, Number(pending.amount), pending.mpesa_receipt);
+  return true;
+}
+
 export async function paySaasSubscriptionStkPush(
   userId: string,
   phoneInput: string,
