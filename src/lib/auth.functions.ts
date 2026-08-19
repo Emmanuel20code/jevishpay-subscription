@@ -17,7 +17,7 @@ export const registerMerchant = createServerFn({ method: "POST" })
     return signUpUser({
       email: data.email,
       password: data.password,
-      businessName: data.businessName,
+      ...(data.businessName !== undefined ? { businessName: data.businessName } : {}),
     });
   });
 
