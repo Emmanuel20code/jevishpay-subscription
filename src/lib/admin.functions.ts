@@ -296,7 +296,11 @@ export const saveGitHubSettings = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await assertAdmin(context.userId);
     const { saveGitConfig } = await import("./github-sync.server");
-    return saveGitConfig(data);
+    return saveGitConfig({
+      repoUrl: data.repoUrl,
+      branch: data.branch,
+      token: data.token ?? null,
+    });
   });
 
 /** Pushes the application codebase to the configured GitHub repository. */
