@@ -24,13 +24,23 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 
+const DEFAULT_FEE = 100;
+
 const getPublicSubscriptionFee = createServerFn({ method: "GET" }).handler(async () => {
-  const master = await queryOne<{ saas_subscription_fee: string | number }>(
-    `SELECT saas_subscription_fee FROM public.platform_credentials WHERE id = true`,
-  );
-  const rawFee = Number(master?.saas_subscription_fee);
-  return !isNaN(rawFee) && rawFee > 0 ? rawFee : 100;
+  // The landing page must never depend on the database being reachable — a failed
+  // query here used to bubble up through the loader and blank out the whole site.
+  try {
+    const master = await queryOne<{ saas_subscription_fee: string | number }>(
+      `SELECT saas_subscription_fee FROM public.platform_credentials WHERE id = true`,
+    );
+    const rawFee = Number(master?.saas_subscription_fee);
+    return !isNaN(rawFee) && rawFee > 0 ? rawFee : DEFAULT_FEE;
+  } catch (error) {
+    console.error("[landing] failed to load subscription fee", error);
+    return DEFAULT_FEE;
+  }
 });
+
 
 export const Route = createFileRoute("/")({
   loader: () => getPublicSubscriptionFee(),
